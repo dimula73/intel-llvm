@@ -9,6 +9,8 @@ def do_configure(args):
     abs_src_dir = os.path.abspath(args.src_dir if args.src_dir else os.path.join(__file__, "../.."))
     # Get absolute path to build directory
     abs_obj_dir = os.path.abspath(args.obj_dir) if args.obj_dir else os.path.join(abs_src_dir, "build")
+    # Get absolute path to install directory
+    abs_install_dir = os.path.abspath(args.install_dir) if args.install_dir else os.path.join(abs_obj_dir, "install")
     # Create build directory if it doesn't exist
     if not os.path.isdir(abs_obj_dir):
       os.makedirs(abs_obj_dir)
@@ -129,8 +131,6 @@ def do_configure(args):
     if args.enable_plugin:
         sycl_enabled_plugins += args.enable_plugin
 
-    install_dir = os.path.join(abs_obj_dir, "install")
-
     cmake_cmd = [
         "cmake",
         "-G", args.cmake_gen,
@@ -150,7 +150,7 @@ def do_configure(args):
         "-DSYCL_BUILD_PI_HIP_PLATFORM={}".format(sycl_build_pi_hip_platform),
         "-DLLVM_BUILD_TOOLS=ON",
         "-DSYCL_ENABLE_WERROR={}".format(sycl_werror),
-        "-DCMAKE_INSTALL_PREFIX={}".format(install_dir),
+        "-DCMAKE_INSTALL_PREFIX={}".format(abs_install_dir),
         "-DSYCL_INCLUDE_TESTS=ON", # Explicitly include all kinds of SYCL tests.
         "-DLLVM_ENABLE_DOXYGEN={}".format(llvm_enable_doxygen),
         "-DLLVM_ENABLE_SPHINX={}".format(llvm_enable_sphinx),
@@ -176,6 +176,10 @@ def do_configure(args):
 
     # Add path to root CMakeLists.txt
     cmake_cmd.append(llvm_dir)
+
+    if args.set_libcxx_as_default:
+      cmake_cmd.extend([
+            "-DCLANG_DEFAULT_CXX_STDLIB=libc++"])
 
     if args.use_libcxx:
       if not (args.libcxx_include and args.libcxx_library):
@@ -214,6 +218,7 @@ def main():
     # User options
     parser.add_argument("-s", "--src-dir", metavar="SRC_DIR", help="source directory (autodetected by default)")
     parser.add_argument("-o", "--obj-dir", metavar="OBJ_DIR", help="build directory. (<src>/build by default)")
+    parser.add_argument("-i", "--install-dir", metavar="INSTALL_DIR", help="install directory. (<build>/install by default)")
     parser.add_argument("--l0-headers", metavar="L0_HEADER_DIR", help="directory with Level Zero headers")
     parser.add_argument("--l0-loader", metavar="L0_LOADER", help="path to the Level Zero loader")
     parser.add_argument("-t", "--build-type",
@@ -231,6 +236,7 @@ def main():
     parser.add_argument("--shared-libs", action='store_true', help="Build shared libraries")
     parser.add_argument("--cmake-opt", action='append', help="Additional CMake option not configured via script parameters")
     parser.add_argument("--cmake-gen", default="Ninja", help="CMake generator")
+    parser.add_argument("--set-libcxx-as-default", action="store_true", help="set libcxx as default runtime for clang")
     parser.add_argument("--use-libcxx", action="store_true", help="build sycl runtime with libcxx")
     parser.add_argument("--libcxx-include", metavar="LIBCXX_INCLUDE_PATH", help="libcxx include path")
     parser.add_argument("--libcxx-library", metavar="LIBCXX_LIBRARY_PATH", help="libcxx library path")
