@@ -1093,8 +1093,8 @@ void SYCLToolChain::AddSYCLIncludeArgs(const clang::driver::Driver &Driver,
   llvm::sys::path::append(SYCLP, "sycl");
   CC1Args.push_back("-internal-isystem");
   CC1Args.push_back(DriverArgs.MakeArgString(SYCLP));
-  CC1Args.push_back("-internal-isystem");
-  CC1Args.push_back(DriverArgs.MakeArgString(P));
+  //CC1Args.push_back("-internal-isystem");
+  //CC1Args.push_back(DriverArgs.MakeArgString(P));
 }
 
 void SYCLToolChain::AddClangSystemIncludeArgs(const ArgList &DriverArgs,
